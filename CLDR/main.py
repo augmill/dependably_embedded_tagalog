@@ -1,5 +1,3 @@
-# https://github.com/christos42/CLDR_CLNER_models/tree/master/CLDR/final_run
-
 import json
 import sys
 import random
