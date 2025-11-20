@@ -1,0 +1,1 @@
+we now need to make the code that will break the graphs down and get the negative sampling 
