@@ -1,0 +1,1 @@
+Link to finetuned BERT model trained on fake_new_filipino data (huggingface): https://huggingface.co/paulbontempo/bert-tagalog-mlm-stage1
