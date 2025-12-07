@@ -5,6 +5,10 @@ from torch.utils.data import DataLoader
 from torchmetrics import Accuracy, F1Score
 from transformers import AutoModel, AutoTokenizer
 
+seed=42
+
+torch.manual_seed(seed)
+
 # Load model and tokenizer
 
 
@@ -12,10 +16,17 @@ from transformers import AutoModel, AutoTokenizer
 do all at once before to make data loader 
 """
 
+def init_weights(model):
+    # NOTE: add instances for other types
+    if isinstance(model, nn.Linear):
+        torch.nn.init.kaiming_uniform_(model.weight, nonlinearity='relu')
+        model.bias.data.fill_(0.01) 
+
 class Classifier(nn.Module):
     def __init__(
             self, 
             dim_in: int, 
+            drop: float,
             *args, 
             **kwargs
     ):
@@ -24,16 +35,20 @@ class Classifier(nn.Module):
         self.dim_hidden = int((dim_in * 2/3) + 1) # 1 for binary output
         self.layer1 = nn.Linear(self.dim_in, self.dim_hidden)
         self.hidden = nn.Linear(self.dim_hidden, self.dim_hidden)
-        self.layer2 = nn.Linear(self.dim_hidden, 2)
+        self.layer2 = nn.Linear(self.dim_hidden, 1)
         self.relu = nn.ReLU()
-        self.drop = nn.Dropout()
+        self.drop = nn.Dropout(drop)
+        self.sigmoid = nn.Sigmoid()
         self.model = nn.Sequential(
             self.layer1, 
             self.relu,
+            self.drop,
             self.hidden, 
             self.relu,
+            self.drop,
             self.layer2
         )
+        self.model.apply(init_weights)
 
     def forward(self, input: torch.Tensor):
         return self.model(input)
@@ -49,7 +64,8 @@ def training(
     for batch in tqdm(data):
         opt.zero_grad()
         logits = model(batch[0])
-        loss = loss_fn(logits, batch[1])
+        # print(batch[1].shape)
+        loss = loss_fn(logits, batch[1].reshape(len(logits), 1).float())
         loss.backward()
         opt.step()
         losses.append(loss.detach().item())
@@ -71,8 +87,11 @@ def validate(
             logits = model(batch[0])
             # loss = metric_fn(logits, batch[1])
             # losses.append(loss.detach().item())
-            accs.append(acc(torch.argmax(logits, dim=1), batch[1]).item())
-            f1s.append(f1(torch.argmax(logits, dim=1), batch[1]).item())
+            # accs.append(acc(torch.argmax(logits, dim=1), batch[1]).item())
+            # f1s.append(f1(torch.argmax(logits, dim=1), batch[1]).item())
+            accs.append(acc(logits, batch[1].reshape(len(logits), 1)))
+            f1s.append(f1(logits, batch[1].reshape(len(logits), 1)))
+
     return accs, f1s
     # return losses
 
@@ -85,7 +104,8 @@ def make_batches(data, batch_size, bert_model):
     labels = data[1]
     batches = []
     for i in range(0, len(articles), batch_size):
-        batches.append([bert(**tokenizer(articles[i:i+batch_size], return_tensors="pt", padding=True, truncation=True)).pooler_output, torch.tensor(labels[i:i+batch_size])])
+        batches.append([bert(**tokenizer(articles[i:i+batch_size], return_tensors="pt", padding=True, truncation=True)).pooler_output, 
+                        torch.tensor(labels[i:i+batch_size])])
     return batches
 
 def fit(
