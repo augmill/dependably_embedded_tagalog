@@ -8,6 +8,9 @@ In order to reproduce the results from this project, please follow run these fil
 
 To reproduce the fine-tuning steps, simply execute the run.sh script in the stage_1 directory, and then the run_cl_training.sh script in the stage_2 directory (scripts require GPU connection). Both scripts call the python scripts in their respective directories, which include the detailed code for dataset loading, model definition, training, evaluation, and logging. The bash scripts require connection to wandb for metrics logging, which can be disabled.
 
+
+For tsne, first install any missing libaries for imports and ensure the approrpiate checked_graphs.jsol is within a folder "data" and contains checked dependency graphs for the task. Run `tsne.py --model {model name}` to obtain the projection for the given step of the archiecture. The options for the model name include "baseline", "stage1", and "CL".
+
 ## Relevent work
 
 [Link to finetuned BERT](https://huggingface.co/paulbontempo/bert-tagalog-mlm-stage1) model trained on fake_new_filipino data (huggingface)
