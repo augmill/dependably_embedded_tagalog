@@ -28,16 +28,16 @@ test_data = [X_test[split+1:], y_test[split+1:]]
 
 
 
-bert_model = "paulbontempo/bert-tagalog-dependency-cl" 
-model_type = "cl"
+# bert_model = "paulbontempo/bert-tagalog-dependency-cl" 
+# model_type = "cl"
 
-train_batches = make_batches(train_data, batch_size, bert_model)
-dev_batches = make_batches(val_data, batch_size, bert_model)
-test_batches = make_batches(test_data, batch_size, bert_model)
+# train_batches = make_batches(train_data, batch_size, bert_model)
+# dev_batches = make_batches(val_data, batch_size, bert_model)
+# test_batches = make_batches(test_data, batch_size, bert_model)
 
-torch.save(train_batches, f"../data/{model_type}_train.pt")
-torch.save(dev_batches, f"../data/{model_type}_dev.pt")
-torch.save(test_batches, f"../data/{model_type}_test.pt")
+# torch.save(train_batches, f"../data/{model_type}_train.pt")
+# torch.save(dev_batches, f"../data/{model_type}_dev.pt")
+# torch.save(test_batches, f"../data/{model_type}_test.pt")
 
 cl_train_batches = torch.load(f"../data/cl_train.pt")
 cl_dev_batches = torch.load(f"../data/cl_dev.pt")
@@ -57,16 +57,16 @@ train_losses = fit(
     epochs=20
 )
 
-bert_model = "paulbontempo/bert-tagalog-mlm-stage1"  
-model_type = "s1" 
+# bert_model = "paulbontempo/bert-tagalog-mlm-stage1"  
+# model_type = "s1" 
 
-train_batches = make_batches(train_data, batch_size, bert_model)
-dev_batches = make_batches(val_data, batch_size, bert_model)
-test_batches = make_batches(test_data, batch_size, bert_model)
+# train_batches = make_batches(train_data, batch_size, bert_model)
+# dev_batches = make_batches(val_data, batch_size, bert_model)
+# test_batches = make_batches(test_data, batch_size, bert_model)
 
-torch.save(train_batches, f"../data/{model_type}_train.pt")
-torch.save(dev_batches, f"../data/{model_type}_dev.pt")
-torch.save(test_batches, f"../data/{model_type}_test.pt")
+# torch.save(train_batches, f"../data/{model_type}_train.pt")
+# torch.save(dev_batches, f"../data/{model_type}_dev.pt")
+# torch.save(test_batches, f"../data/{model_type}_test.pt")
 
 s1_train_batches = torch.load(f"../data/s1_train.pt")
 s1_dev_batches = torch.load(f"../data/s1_dev.pt")
@@ -86,16 +86,16 @@ train_losses = fit(
     epochs=10
 )
 
-bert_model = "google-bert/bert-base-multilingual-cased"
-model_type = "base"
+# bert_model = "google-bert/bert-base-multilingual-cased"
+# model_type = "base"
 
-train_batches = make_batches(train_data, batch_size, bert_model)
-dev_batches = make_batches(val_data, batch_size, bert_model)
-test_batches = make_batches(test_data, batch_size, bert_model)
+# train_batches = make_batches(train_data, batch_size, bert_model)
+# dev_batches = make_batches(val_data, batch_size, bert_model)
+# test_batches = make_batches(test_data, batch_size, bert_model)
 
-torch.save(train_batches, f"../data/{model_type}_train.pt")
-torch.save(dev_batches, f"../data/{model_type}_dev.pt")
-torch.save(test_batches, f"../data/{model_type}_test.pt")
+# torch.save(train_batches, f"../data/{model_type}_train.pt")
+# torch.save(dev_batches, f"../data/{model_type}_dev.pt")
+# torch.save(test_batches, f"../data/{model_type}_test.pt")
 
 base_train_batches = torch.load(f"../data/base_train.pt")
 base_dev_batches = torch.load(f"../data/base_dev.pt")
