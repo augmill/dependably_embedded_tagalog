@@ -6,9 +6,9 @@ In order to reproduce the results from this project, please follow run these fil
 
 1. For the classification task, run `run.py` in the classifier folder.
 
-To reproduce the fine-tuning steps, simply execute the run.sh script in the stage_1 directory, and then the run_cl_training.sh script in the stage_2 directory (scripts require GPU connection). Both scripts call the python scripts in their respective directories, which include the detailed code for dataset loading, model definition, training, evaluation, and logging. The bash scripts require connection to wandb for metrics logging, which can be disabled.
+1. To reproduce the fine-tuning steps, simply execute the run.sh script in the stage_1 directory, and then the run_cl_training.sh script in the stage_2 directory (scripts require GPU connection). Both scripts call the python scripts in their respective directories, which include the detailed code for dataset loading, model definition, training, evaluation, and logging. The bash scripts require connection to wandb for metrics logging, which can be disabled.
 
-For tsne, first install any missing libaries for imports and ensure the approrpiate checked_graphs.jsol is within a folder "data" and contains checked dependency graphs for the task. Run `tsne.py --model {model name}` to obtain the projection for the given step of the archiecture. The options for the model name include "baseline", "stage1", and "CL".
+1. For tsne, first install any missing libaries for imports and ensure the approrpiate checked_graphs.jsol is within a folder "data" and contains checked dependency graphs for the task. Run `tsne.py --model {model name}` to obtain the projection for the given step of the archiecture. The options for the model name include "baseline", "stage1", and "CL".
 
 ## Relevent work
 
