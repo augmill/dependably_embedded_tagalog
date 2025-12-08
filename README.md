@@ -2,7 +2,10 @@
 
 ## How to run
 
-In order to reproduce this project from
+In order to reproduce the results from this project, please follow run these files:
+
+1. For the classification task, run `run.py` in the classifier folder. 
+
 
 ## Relevent work
 
