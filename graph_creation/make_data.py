@@ -3,16 +3,6 @@ import torch
 import pyconll
 from tqdm import tqdm
 
-" for train: node_embeddings, adj_m, enc_sent, atte_mask, indexes_of_interest_shifted = batch"
-"""
-main model reads in a json of splits 
-list of file names (split_num.json) passed to ade_daraset in utils 
-
-may be easier to just have our own dataset class 
-
-looks to be set of positive graph and then all of the negative ones for that graph 
-"""
-
 def get_triple(sent, t: pyconll.unit.token.Token) -> list:
     """
     Creates the triple [head, dependent, relation] 
@@ -22,10 +12,6 @@ def get_triple(sent, t: pyconll.unit.token.Token) -> list:
 
     :returns list: [head, dependent, relation]
     """
-    # head = sent[int(str(t.head))-1].form
-    # dep = sent[int(t.id)-1].form
-    # rel = t.deprel
-    # return [head, dep, rel]
     return [sent[int(t.head)-1].form, sent[int(t.id)-1].form, t.deprel]
 
 def make_neg(rs, ks, s_id) -> list:
@@ -55,7 +41,6 @@ def get_embedding():
     """
     Gets embeddings 
     """
-    # return torch.zeros(768)
     return [0.0] # * 768
 
 def make_graphs(data) -> dict:
@@ -66,8 +51,7 @@ def make_graphs(data) -> dict:
 
     :returns dict: {sentence_id: [positive_samples, negative_samples]}
     """
-    # sents = {}
-    with open("data/graphs.jsonl", "w") as f:
+    with open("../data/graphs.jsonl", "w") as f:
         for sent_id, sentence in enumerate(tqdm(data)):
             relations = {} 
             keys = []
@@ -79,8 +63,6 @@ def make_graphs(data) -> dict:
                     ident = (triple[0], triple[2])
                     pos_samples.append({"triple": (triple), "embeddings": emb, "sentence_id": sent_id, 
                                         "neg_sample":False})
-                    # neg_graph = {"triple": ([triple[1], triple[0], triple[2]]), "embeddings": emb, 
-                    #         "sentence_id": sent_id, "neg_sample":True}
                     if ident not in relations.keys():
                         relations[ident] = {triple[1]: emb}
                         keys.append(ident)
@@ -88,19 +70,3 @@ def make_graphs(data) -> dict:
             neg_samples = make_neg(relations, keys, sent_id)
             json.dump({sent_id : [pos_samples, neg_samples]}, f)
             f.write('\n')
-
-    # sents
-
-
-"""
-make all possible negative by switching relation
-finding all possible out comes for a given relation (or head relation pair) type and then assigning 
-ones from others to this one that it didn't have 
-find out more about the lang and negative sample based on that
-
-head and relation tokens 
-
-loop through all instances, make dict 
-{head (token.head-1),relation(token.deprel): [all, possible, deps(token.id)-1]}
-check by seeing if a negative sample relation exists in positive sample then deleting from negative 
-"""
