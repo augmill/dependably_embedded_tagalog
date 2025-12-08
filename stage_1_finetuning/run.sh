@@ -13,7 +13,7 @@
 #SBATCH --mail-user=pabo8622@colorado.edu
 
 # Set WandB API key
-export WANDB_API_KEY="284c506b078a658c62be2eae5df7ff68daae602b"
+export WANDB_API_KEY=" "
 
 # Set temp directories
 export TMPDIR=/projects/$USER/tmp
