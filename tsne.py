@@ -12,19 +12,21 @@ import argparse
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--model", required=True, choices=["baseline", "cl", "stage1"])
+parser.add_argument("--model", required=True, choices=["baseline", "cl", "stage1", "cl_only"])
 args = parser.parse_args()
 
 MODEL_PATHS = {
     "baseline": "bert-base-multilingual-cased",
     "stage1": "paulbontempo/bert-tagalog-mlm-stage1",
-    "cl": "paulbontempo/bert-tagalog-dependency-cl"
+    "cl": "paulbontempo/bert-tagalog-dependency-cl",
+    "cl_only": "paulbontempo/bert-tagalog-cl-only",  # CL-only ablation (no stage 1 MLM)
 }
 
 MODEL_NAMES = {
     "baseline": "Baseline",
     "stage1": "Finetune",
-    "cl": "CL"
+    "cl": "CL",
+    "cl_only": "CL-Only",
 }
 
 model_name = MODEL_PATHS[args.model]

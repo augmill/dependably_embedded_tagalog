@@ -115,3 +115,34 @@ train_losses = fit(
     epochs=10
 )
 
+# --- CL-Only Model (base BERT + CL, no stage 1 MLM) ---
+
+# bert_model = "paulbontempo/bert-tagalog-cl-only"  # Update after uploading
+# model_type = "cl_only"
+
+# train_batches = make_batches(train_data, batch_size, bert_model)
+# dev_batches = make_batches(val_data, batch_size, bert_model)
+# test_batches = make_batches(test_data, batch_size, bert_model)
+
+# torch.save(train_batches, f"../data/{model_type}_train.pt")
+# torch.save(dev_batches, f"../data/{model_type}_dev.pt")
+# torch.save(test_batches, f"../data/{model_type}_test.pt")
+
+cl_only_train_batches = torch.load(f"../data/cl_only_train.pt")
+cl_only_dev_batches = torch.load(f"../data/cl_only_dev.pt")
+cl_only_test_batches = torch.load(f"../data/cl_only_test.pt")
+
+cl_only_model = Classifier(
+    dim_in=768,
+    drop=0.5
+)
+
+train_losses = fit(
+    model=cl_only_model,
+    train_data=cl_only_train_batches,
+    dev_data=cl_only_dev_batches,
+    opt=torch.optim.AdamW(params=cl_only_model.parameters(), lr=1e-3),
+    loss_fn=nn.BCEWithLogitsLoss(),
+    epochs=20
+)
+
