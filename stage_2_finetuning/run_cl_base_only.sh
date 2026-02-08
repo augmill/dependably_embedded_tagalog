@@ -61,10 +61,13 @@ echo ""
 python -c "import torch; print(f'PyTorch: {torch.__version__}'); print(f'CUDA available: {torch.cuda.is_available()}')"
 echo ""
 
+# Repo directory
+REPO_DIR="/projects/pabo8622/dependably_embedded_tagalog"
+
 # Configuration
-DATA_FILE="/projects/pabo8622/NeSy/CL/checked_graphs.jsonl"  # Same data as MLM+CL
+DATA_FILE="$REPO_DIR/data/checked_graphs.jsonl"
 BERT_MODEL="google-bert/bert-base-multilingual-cased"  # Base BERT - NO stage 1 MLM
-OUTPUT_DIR="/projects/pabo8622/NeSy/CL/cl_model_base_only"
+OUTPUT_DIR="$REPO_DIR/stage_2_finetuning/cl_model_base_only"
 
 # Training hyperparameters - IDENTICAL to MLM+CL run
 EPOCHS=50
@@ -93,13 +96,13 @@ echo ""
 mkdir -p $OUTPUT_DIR
 
 # Change to working directory
-cd /projects/pabo8622/NeSy
+cd $REPO_DIR
 
 # Run training
 echo "Starting training..."
 echo "========================================"
 
-python CL/train_cl.py \
+python stage_2_finetuning/train_cl.py \
     --data_file $DATA_FILE \
     --bert_model $BERT_MODEL \
     --output_dir $OUTPUT_DIR \

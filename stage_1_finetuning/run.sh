@@ -41,8 +41,11 @@ echo "Python location: $(which python)"
 echo "Python version: $(python --version)"
 conda list | grep torch
 
-# Change to the directory where your data and script are
-cd /projects/pabo8622/NeSy
+# Repo directory
+REPO_DIR=/projects/pabo8622/dependably_embedded_tagalog
+
+# Change to the stage 1 finetuning directory
+cd $REPO_DIR/stage_1_finetuning
 
 # Verify GPU and PyTorch
 nvidia-smi
