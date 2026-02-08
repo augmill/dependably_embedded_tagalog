@@ -21,8 +21,8 @@ echo "Node: $SLURM_NODELIST"
 echo "Start time: $(date)"
 echo ""
 
-# Set WandB API key
-export WANDB_API_KEY=" "
+# Disable WandB logging
+export WANDB_MODE=disabled
 
 # Set temp directories
 export TMPDIR=/projects/$USER/tmp

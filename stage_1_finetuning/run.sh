@@ -12,8 +12,8 @@
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --mail-user=pabo8622@colorado.edu
 
-# Set WandB API key
-export WANDB_API_KEY=" "
+# Disable WandB logging
+export WANDB_MODE=disabled
 
 # Set temp directories
 export TMPDIR=/projects/$USER/tmp
