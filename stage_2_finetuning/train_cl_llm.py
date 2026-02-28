@@ -1,8 +1,19 @@
 """
 Contrastive Learning Training for Decoder-Only LLMs (e.g., Qwen)
-Adapts train_cl.py to target model.model.embed_tokens instead of BERT's
-embeddings.word_embeddings. All other components (InfoNCELoss, dataset,
-batch sampler, training loop) are identical to train_cl.py.
+
+Two training modes selected via --full_backprop flag:
+
+  embed_only (default):
+    Looks up static token embeddings from model.model.embed_tokens.
+    Only embed_tokens + projection head are trainable. Fast, low memory.
+    Analogous to the BERT CL approach in train_cl.py.
+
+  full_backprop (--full_backprop):
+    Runs the full LLM forward pass and uses last_hidden_state as the
+    token representation. All model parameters are trainable. The CL
+    signal propagates through every transformer layer, teaching the model
+    to produce similar *contextual* representations for tokens that share
+    the same syntactic dependency relation.
 """
 
 import json
@@ -154,16 +165,24 @@ class DependencyTripleDataset(Dataset):
 
 class ContrastiveLLMModel(nn.Module):
     """
-    Contrastive model for decoder-only LLMs.
-    Targets model.model.embed_tokens (Qwen/Llama convention) instead of
-    BERT's model.embeddings.word_embeddings. All other logic is identical
-    to ContrastiveDependencyModel in train_cl.py.
+    Contrastive model for decoder-only LLMs with two operating modes:
+
+    embed_only (full_backprop=False):
+      Looks up token vectors directly from model.model.embed_tokens —
+      identical in spirit to the BERT approach in train_cl.py. Static
+      (non-contextual) representations; only embed_tokens is trained.
+
+    full_backprop (full_backprop=True):
+      Runs a full causal LM forward pass on each token and extracts
+      last_hidden_state. This gives *contextual* representations and
+      allows gradients to update every transformer layer.
     """
 
-    def __init__(self, llm_model, tokenizer, projection_dim=256):
+    def __init__(self, llm_model, tokenizer, projection_dim=256, full_backprop=False):
         super().__init__()
         self.llm_model = llm_model
         self.tokenizer = tokenizer
+        self.full_backprop = full_backprop
 
         hidden_dim = llm_model.config.hidden_size
         triple_dim = hidden_dim * 2  # head + dep concatenated
@@ -175,25 +194,40 @@ class ContrastiveLLMModel(nn.Module):
             nn.Linear(projection_dim * 2, projection_dim),
         )
 
+        mode_str = "full forward pass (contextual)" if full_backprop else "embed_tokens lookup (static)"
         print(f"Model initialized:")
         print(f"  LLM hidden dim: {hidden_dim}")
         print(f"  Projection input dim: {triple_dim}")
         print(f"  Projection dim: {projection_dim}")
-        print(f"  Only embed_tokens and projection head are trainable")
+        print(f"  Mode: {mode_str}")
 
     def get_token_embedding(self, token_text, device):
         """
-        Look up token embedding from the LLM's input embedding table.
-        Key difference from BERT: model.model.embed_tokens instead of
-        model.embeddings.word_embeddings.
+        Get a representation for a single token string.
+
+        embed_only: direct lookup from embed_tokens (no transformer layers).
+        full_backprop: full causal LM forward pass; mean-pool last_hidden_state
+          over subword positions to get a single vector per token.
         """
         token_ids = self.tokenizer.encode(token_text, add_special_tokens=False)
         if len(token_ids) == 0:
             token_ids = [self.tokenizer.unk_token_id]
 
         token_ids_tensor = torch.tensor(token_ids, device=device)
-        embeddings = self.llm_model.model.embed_tokens(token_ids_tensor)
-        return embeddings.mean(dim=0)
+
+        if self.full_backprop:
+            # Full forward pass through all transformer layers.
+            # input: [1, seq_len] -> hidden_states[-1]: [1, seq_len, hidden_dim]
+            outputs = self.llm_model(
+                token_ids_tensor.unsqueeze(0),
+                output_hidden_states=True,
+            )
+            last_hidden = outputs.hidden_states[-1][0]  # [seq_len, hidden_dim]
+            return last_hidden.mean(dim=0)              # [hidden_dim]
+        else:
+            # Static embedding lookup only
+            embeddings = self.llm_model.model.embed_tokens(token_ids_tensor)
+            return embeddings.mean(dim=0)
 
     def forward(self, head_tokens, dep_tokens):
         device = next(self.llm_model.parameters()).device
@@ -313,6 +347,9 @@ def main():
     parser.add_argument('--temperature', type=float, default=0.07)
     parser.add_argument('--projection_dim', type=int, default=256)
     parser.add_argument('--warmup_steps', type=int, default=300)
+    parser.add_argument('--full_backprop', action='store_true',
+                        help='Run full LLM forward pass and train all parameters. '
+                             'Default: only embed_tokens is trained (static embeddings).')
     args = parser.parse_args()
 
     os.makedirs(args.output_dir, exist_ok=True)
@@ -321,22 +358,29 @@ def main():
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"Using device: {device}")
+    print(f"Training mode: {'full_backprop (contextual)' if args.full_backprop else 'embed_only (static)'}")
 
     print("Loading LLM...")
     llm = AutoModelForCausalLM.from_pretrained(
         args.llm_model,
-        torch_dtype=torch.float32,
+        torch_dtype=torch.float16 if args.full_backprop else torch.float32,
         trust_remote_code=True,
     ).to(device)
     tokenizer = AutoTokenizer.from_pretrained(args.llm_model, trust_remote_code=True)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
-    # Freeze everything except the input embedding layer
-    for param in llm.parameters():
-        param.requires_grad = False
-    for param in llm.model.embed_tokens.parameters():
-        param.requires_grad = True
+    if args.full_backprop:
+        # All parameters trainable; use gradient checkpointing to manage memory
+        for param in llm.parameters():
+            param.requires_grad = True
+        llm.gradient_checkpointing_enable()
+    else:
+        # Only the static input embedding table is trainable
+        for param in llm.parameters():
+            param.requires_grad = False
+        for param in llm.model.embed_tokens.parameters():
+            param.requires_grad = True
 
     trainable = sum(p.numel() for p in llm.parameters() if p.requires_grad)
     total = sum(p.numel() for p in llm.parameters())
@@ -346,7 +390,12 @@ def main():
     batch_sampler = RelationAwareBatchSampler(dataset, batch_size=args.batch_size, drop_last=False)
     dataloader = DataLoader(dataset, batch_sampler=batch_sampler, num_workers=0, collate_fn=collate_fn)
 
-    model = ContrastiveLLMModel(llm_model=llm, tokenizer=tokenizer, projection_dim=args.projection_dim).to(device)
+    model = ContrastiveLLMModel(
+        llm_model=llm,
+        tokenizer=tokenizer,
+        projection_dim=args.projection_dim,
+        full_backprop=args.full_backprop,
+    ).to(device)
 
     optimizer = torch.optim.AdamW(
         filter(lambda p: p.requires_grad, model.parameters()),
