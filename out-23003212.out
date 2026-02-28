@@ -1,0 +1,97 @@
+========================================
+Starting Contrastive Learning Training (Qwen-0.5B)
+Fine-tuning Qwen input embeddings with dependency structure
+========================================
+Job ID: 23003212
+Node: bgpu-g4-u32
+Start time: Sat Feb 28 15:46:17 MST 2026
+
+/var/spool/slurmd/job23003212/slurm_script: line 42: /curc/sw/anaconda3/latest/etc/profile.d/conda.sh: Not a directory
+Environment activated:
+  Python: /projects/pabo8622/software/anaconda/envs/cbert/bin/python
+  Conda env: cbert
+
+GPU Information:
+Sat Feb 28 15:46:18 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 570.86.15              Driver Version: 570.86.15      CUDA Version: 12.8     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA H100 PCIe               On  |   00000000:21:00.0 Off |                   On |
+| N/A   59C    P0            290W /  350W |   29942MiB /  81559MiB |     N/A      Default |
+|                                         |                        |              Enabled |
++-----------------------------------------+------------------------+----------------------+
+|   1  NVIDIA H100 PCIe               On  |   00000000:81:00.0 Off |                   On |
+| N/A   64C    P0            326W /  350W |   73557MiB /  81559MiB |     N/A      Default |
+|                                         |                        |              Enabled |
++-----------------------------------------+------------------------+----------------------+
+|   2  NVIDIA H100 PCIe               On  |   00000000:E2:00.0 Off |                   On |
+| N/A   46C    P0            203W /  350W |   21534MiB /  81559MiB |     N/A      Default |
+|                                         |                        |              Enabled |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| MIG devices:                                                                            |
++------------------+----------------------------------+-----------+-----------------------+
+| GPU  GI  CI  MIG |                     Memory-Usage |        Vol|        Shared         |
+|      ID  ID  Dev |                       BAR1-Usage | SM     Unc| CE ENC  DEC  OFA  JPG |
+|                  |                                  |        ECC|                       |
+|==================+==================================+===========+=======================|
+|  0    4   0   0  |              29MiB / 20096MiB    | 30      0 |  2   0    2    0    2 |
+|                  |                 0MiB / 32767MiB  |           |                       |
++------------------+----------------------------------+-----------+-----------------------+
+                                                                                         
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|    1    0    0           215016      C   ...ts/aagl3791/ollama/bin/ollama      72632MiB |
+|    1    0    0           286941      C   python                                  920MiB |
+|    2    2    0           226049      C   ...ts/mrgu4758/ollama/bin/ollama      21424MiB |
++-----------------------------------------------------------------------------------------+
+
+PyTorch: 2.5.1+cu121
+CUDA available: True
+
+Training Configuration:
+  Data file: /projects/pabo8622/dependably_embedded_tagalog/data/checked_graphs.jsonl
+  LLM model: Qwen/Qwen2.5-0.5B
+  Output dir: /projects/pabo8622/dependably_embedded_tagalog/stage_2_finetuning/cl_qwen_0.5b
+  Epochs: 50
+  Batch size: 24
+  Learning rate: 3e-5
+  Temperature: 0.07
+  Projection dim: 256
+  Warmup steps: 300
+
+Note: Only embed_tokens layer is trainable (all transformer layers frozen)
+
+Starting training...
+========================================
+/projects/pabo8622/software/anaconda/envs/cbert/lib/python3.10/site-packages/huggingface_hub/file_download.py:942: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
+  warnings.warn(
+Using device: cuda
+Training mode: embed_only (static)
+Loading LLM...
+Traceback (most recent call last):
+  File "/projects/pabo8622/dependably_embedded_tagalog/stage_2_finetuning/train_cl_llm.py", line 449, in <module>
+    main()
+  File "/projects/pabo8622/dependably_embedded_tagalog/stage_2_finetuning/train_cl_llm.py", line 364, in main
+    llm = AutoModelForCausalLM.from_pretrained(
+  File "/projects/pabo8622/software/anaconda/envs/cbert/lib/python3.10/site-packages/transformers/models/auto/auto_factory.py", line 525, in from_pretrained
+    config, kwargs = AutoConfig.from_pretrained(
+  File "/projects/pabo8622/software/anaconda/envs/cbert/lib/python3.10/site-packages/transformers/models/auto/configuration_auto.py", line 1050, in from_pretrained
+    config_class = CONFIG_MAPPING[config_dict["model_type"]]
+  File "/projects/pabo8622/software/anaconda/envs/cbert/lib/python3.10/site-packages/transformers/models/auto/configuration_auto.py", line 748, in __getitem__
+    raise KeyError(key)
+KeyError: 'qwen2'
+
+========================================
+Job completed with exit code: 1
+End time: Sat Feb 28 15:48:10 MST 2026
+========================================
+Training failed with exit code 1
