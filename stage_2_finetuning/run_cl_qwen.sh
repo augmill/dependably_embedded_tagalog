@@ -8,7 +8,7 @@
 #SBATCH --gres=gpu:h100_2g.20gb:1
 #SBATCH --time=04:00:00
 #SBATCH --job-name=cl_qwen_training
-#SBATCH --output=out-%j.out
+#SBATCH --output=cl_qwen_out-%j.out
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --mail-user=pabo8622@colorado.edu
 
@@ -46,6 +46,9 @@ fi
 
 # Activate conda environment
 conda activate cbert
+
+# Upgrade transformers to support Qwen2 (requires >= 4.37.0)
+pip install -q --upgrade transformers
 
 echo "Environment activated:"
 echo "  Python: $(which python)"
