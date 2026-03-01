@@ -201,42 +201,69 @@ class ContrastiveLLMModel(nn.Module):
         print(f"  Projection dim: {projection_dim}")
         print(f"  Mode: {mode_str}")
 
+    def get_batch_embeddings(self, token_texts, device):
+        """
+        Run a single batched LLM forward pass for a list of token strings.
+        Used in full_backprop mode: reduces per-batch LLM calls from
+        2*batch_size sequential calls down to 2 (one for heads, one for deps).
+
+        Tokenizes all strings, pads to the longest subword sequence in the
+        group, runs one forward pass, then mean-pools last_hidden_state over
+        non-padding positions. Returns float32 [len(token_texts), hidden_dim].
+        """
+        all_ids = []
+        for text in token_texts:
+            ids = self.tokenizer.encode(text, add_special_tokens=False)
+            if len(ids) == 0:
+                ids = [self.tokenizer.unk_token_id]
+            all_ids.append(ids)
+
+        max_len = max(len(ids) for ids in all_ids)
+        pad_id = self.tokenizer.pad_token_id or self.tokenizer.eos_token_id
+        padded_ids, attn_mask = [], []
+        for ids in all_ids:
+            pad_len = max_len - len(ids)
+            padded_ids.append(ids + [pad_id] * pad_len)
+            attn_mask.append([1] * len(ids) + [0] * pad_len)
+
+        input_ids = torch.tensor(padded_ids, device=device)
+        attention_mask = torch.tensor(attn_mask, device=device)
+
+        outputs = self.llm_model(
+            input_ids,
+            attention_mask=attention_mask,
+            output_hidden_states=True,
+        )
+        last_hidden = outputs.hidden_states[-1]  # [batch, seq_len, hidden_dim]
+
+        # Mean-pool over non-padding positions; cast to float32 for projection head
+        mask_f = attention_mask.unsqueeze(-1).to(last_hidden.dtype)
+        summed = (last_hidden * mask_f).sum(dim=1)
+        counts = mask_f.sum(dim=1).clamp(min=1)
+        return (summed / counts).float()  # [batch_size, hidden_dim]
+
     def get_token_embedding(self, token_text, device):
         """
-        Get a representation for a single token string.
-
-        embed_only: direct lookup from embed_tokens (no transformer layers).
-        full_backprop: full causal LM forward pass; mean-pool last_hidden_state
-          over subword positions to get a single vector per token.
+        Static embedding lookup from model.model.embed_tokens (embed_only mode).
+        Mean-pools over subword tokens to produce a single vector.
         """
         token_ids = self.tokenizer.encode(token_text, add_special_tokens=False)
         if len(token_ids) == 0:
             token_ids = [self.tokenizer.unk_token_id]
-
         token_ids_tensor = torch.tensor(token_ids, device=device)
-
-        if self.full_backprop:
-            # Full forward pass through all transformer layers.
-            # input: [1, seq_len] -> hidden_states[-1]: [1, seq_len, hidden_dim]
-            outputs = self.llm_model(
-                token_ids_tensor.unsqueeze(0),
-                output_hidden_states=True,
-            )
-            last_hidden = outputs.hidden_states[-1][0]  # [seq_len, hidden_dim]
-            return last_hidden.mean(dim=0).float()      # cast to float32 to match projection head
-        else:
-            # Static embedding lookup only
-            embeddings = self.llm_model.model.embed_tokens(token_ids_tensor)
-            return embeddings.mean(dim=0)
+        embeddings = self.llm_model.model.embed_tokens(token_ids_tensor)
+        return embeddings.mean(dim=0)
 
     def forward(self, head_tokens, dep_tokens):
         device = next(self.llm_model.parameters()).device
 
-        head_embeddings = [self.get_token_embedding(t, device) for t in head_tokens]
-        dep_embeddings = [self.get_token_embedding(t, device) for t in dep_tokens]
-
-        head_embeddings = torch.stack(head_embeddings)
-        dep_embeddings = torch.stack(dep_embeddings)
+        if self.full_backprop:
+            # Two batched LLM forward passes instead of 2*batch_size sequential calls
+            head_embeddings = self.get_batch_embeddings(head_tokens, device)
+            dep_embeddings = self.get_batch_embeddings(dep_tokens, device)
+        else:
+            head_embeddings = torch.stack([self.get_token_embedding(t, device) for t in head_tokens])
+            dep_embeddings = torch.stack([self.get_token_embedding(t, device) for t in dep_tokens])
 
         triple_repr = torch.cat([head_embeddings, dep_embeddings], dim=1)
         projected = self.projection(triple_repr)
@@ -363,7 +390,7 @@ def main():
     print("Loading LLM...")
     llm = AutoModelForCausalLM.from_pretrained(
         args.llm_model,
-        torch_dtype=torch.float16 if args.full_backprop else torch.float32,
+        dtype=torch.bfloat16 if args.full_backprop else torch.float32,
         trust_remote_code=True,
     ).to(device)
     tokenizer = AutoTokenizer.from_pretrained(args.llm_model, trust_remote_code=True)
