@@ -223,7 +223,7 @@ class ContrastiveLLMModel(nn.Module):
                 output_hidden_states=True,
             )
             last_hidden = outputs.hidden_states[-1][0]  # [seq_len, hidden_dim]
-            return last_hidden.mean(dim=0)              # [hidden_dim]
+            return last_hidden.mean(dim=0).float()      # cast to float32 to match projection head
         else:
             # Static embedding lookup only
             embeddings = self.llm_model.model.embed_tokens(token_ids_tensor)
