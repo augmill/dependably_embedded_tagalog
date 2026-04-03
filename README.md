@@ -1,6 +1,7 @@
 # Information on the project
 
-## Research Question: Can we train a language model to understand a low-resource language with only a small dataset of syntactic dependency trees by using synthetic data augmentation and contrastive learning?
+## Research Question: 
+Can we train a language model to understand a low-resource language with only a small dataset of syntactic dependency trees by using synthetic data augmentation and contrastive learning?
 
 ## Tasks:
 
