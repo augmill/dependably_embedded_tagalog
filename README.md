@@ -1,5 +1,26 @@
 # Information on the project
 
+## Research Question: Can we train a language model to understand a low-resource language with only a small 
+dataset of syntactic dependency trees by using synthetic data augmentation and contrastive learning?
+
+## Tasks:
+
+1. Document classification (binary fake news detection on huggingface - jcblaise/fake_news_filipino)
+
+1. Span classification (named entity recognition (NER) on huggingface - ljvmiranda921/tlunified-ner)
+
+1. Text generation (headline generation from news article text on huggingface - LanceBunag/BalitaNLP)
+
+## Models: 
+
+1. MBERT for classification tasks 
+(base, MLM-only, CL-only, MLM+CL)
+
+1. Qwen for generation tasks
+(CL-finetuned)
+
+1. BASELINE FOR ALL EXPERIMENTS - Qwen family (0.5b, 1.5b, 7b) with prompting
+
 ## How to run
 
 In order to reproduce the results from this project, please follow run these files:
