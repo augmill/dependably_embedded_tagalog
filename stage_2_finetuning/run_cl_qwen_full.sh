@@ -7,13 +7,13 @@
 #SBATCH --mem=64G
 #SBATCH --gres=gpu:h100_2g.20gb:1
 #SBATCH --time=08:00:00
-#SBATCH --job-name=cl_qwen_full_backprop
-#SBATCH --output=cl_qwen_full_out-%j.out
+#SBATCH --job-name=cl_qwen_instruct_full
+#SBATCH --output=cl_qwen_instruct_full_out-%j.out
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --mail-user=pabo8622@colorado.edu
 
 echo "========================================"
-echo "Starting CL Training - Qwen-0.5B Full Backprop"
+echo "Starting CL Training - Qwen-0.5B-Instruct Full Backprop"
 echo "Full LLM forward pass; all parameters trainable"
 echo "========================================"
 echo "Job ID: $SLURM_JOB_ID"
@@ -69,8 +69,8 @@ REPO_DIR="/projects/pabo8622/dependably_embedded_tagalog"
 
 # Configuration
 DATA_FILE="$REPO_DIR/data/checked_graphs.jsonl"
-LLM_MODEL="Qwen/Qwen2.5-0.5B"
-OUTPUT_DIR="$REPO_DIR/stage_2_finetuning/cl_qwen_0.5b_full"
+LLM_MODEL="Qwen/Qwen2.5-0.5B-Instruct"
+OUTPUT_DIR="$REPO_DIR/stage_2_finetuning/cl_qwen_0.5b_instruct_full"
 
 # Training hyperparameters
 # Lower lr than embed-only run: full backprop risks overwriting pretrained weights
@@ -83,7 +83,7 @@ WARMUP_STEPS=500
 
 echo "Training Configuration:"
 echo "  Data file: $DATA_FILE"
-echo "  LLM model: $LLM_MODEL"
+echo "  LLM model: $LLM_MODEL (Instruct variant for direct comparability with Instruct baselines)"
 echo "  Output dir: $OUTPUT_DIR"
 echo "  Mode: full_backprop (all parameters trainable)"
 echo "  Epochs: $EPOCHS"
@@ -131,6 +131,8 @@ if [ $EXIT_CODE -eq 0 ]; then
     echo "Model outputs:"
     echo "  Final model: $OUTPUT_DIR/final_model/"
     echo "  Checkpoints every 5 epochs: $OUTPUT_DIR/checkpoint_epoch_*/"
+    echo ""
+    echo "Upload to HuggingFace as: paulbontempo/qwen-0.5b-instruct-tagalog-cl-full"
 else
     echo "Training failed with exit code $EXIT_CODE"
 fi

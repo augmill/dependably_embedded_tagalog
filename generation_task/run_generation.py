@@ -11,36 +11,53 @@ Task 1 - Perplexity (primary):
 Task 2 - Headline generation (secondary):
   Given the first paragraph (title_choice_first_paragraph), generate the headline.
   Compare against gold title.
-  Metrics: ROUGE-L F1, BERTScore F1, ChrF++
+  Metrics: ROUGE-L F1, ChrF++, multilingual SBERT cosine similarity
 
 Models evaluated:
-  - Qwen-0.5B baseline (no CL fine-tuning)
-  - Qwen-0.5B + CL embed-only (paulbontempo/qwen-0.5b-tagalog-cl)
-  - Qwen-0.5B + CL full backprop (paulbontempo/qwen-0.5b-tagalog-cl-full; update after upload)
-  - Qwen-1.5B baseline
-  - Qwen-7B baseline
+  Baselines (Instruct variants; few-shot prompting):
+    - Qwen-0.5B-Instruct
+    - Qwen-1.5B-Instruct
+    - Qwen-7B-Instruct
+  CL fine-tuned (zero-shot prompting):
+    - Qwen-0.5B + CL embed-only (paulbontempo/qwen-0.5b-tagalog-cl; trained from base)
+    - Qwen-0.5B-Instruct + CL full backprop (paulbontempo/qwen-0.5b-instruct-tagalog-cl-full)
+      NOTE: update path after uploading the full-backprop checkpoint to HuggingFace.
+
+Note on dtype: all models loaded in bfloat16. Qwen2.5 is pretrained in bfloat16;
+this avoids float16 overflow on larger models and matches training dtype.
 """
 
 import math
 import torch
+import numpy as np
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from datasets import load_dataset
-from bert_score import score as bert_score
 from sacrebleu.metrics import CHRF
 from rouge_score import rouge_scorer
+from sentence_transformers import SentenceTransformer
+from sentence_transformers.util import cos_sim
 from tqdm import tqdm
 
 torch.manual_seed(42)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+# Multilingual SBERT model — loaded once and reused across all model evaluations.
+# paraphrase-multilingual-mpnet-base-v2 covers Filipino and is the standard
+# multilingual SBERT model for semantic similarity tasks.
+print("Loading multilingual SBERT model...")
+SBERT_MODEL = SentenceTransformer("paraphrase-multilingual-mpnet-base-v2")
+
 # --- Model configs ---
-# Update qwen_0.5b_cl_full path after uploading the full-backprop checkpoint
+# Baselines use Instruct variants for better prompt-following.
+# CL embed-only was trained from the base model (noted limitation).
+# CL full-backprop was trained from Instruct for direct comparability.
+# TODO: update qwen_0.5b_cl_full path after uploading checkpoint to HuggingFace.
 MODELS = {
-    "qwen_0.5b_baseline": "Qwen/Qwen2.5-0.5B",
+    "qwen_0.5b_baseline": "Qwen/Qwen2.5-0.5B-Instruct",
     "qwen_0.5b_cl_embed": "paulbontempo/qwen-0.5b-tagalog-cl",
-    "qwen_0.5b_cl_full": "paulbontempo/qwen-0.5b-tagalog-cl-full",  # update after upload
-    "qwen_1.5b_baseline": "Qwen/Qwen2.5-1.5B",
-    "qwen_7b_baseline": "Qwen/Qwen2.5-7B",
+    "qwen_0.5b_cl_full": "paulbontempo/qwen-0.5b-instruct-tagalog-cl-full",  # TODO: update after upload
+    "qwen_1.5b_baseline": "Qwen/Qwen2.5-1.5B-Instruct",
+    "qwen_7b_baseline": "Qwen/Qwen2.5-7B-Instruct",
 }
 
 MAX_NEW_TOKENS = 32   # headlines are short
@@ -147,15 +164,7 @@ def generate_headline(model, tokenizer, paragraph, few_shot=True):
 
 
 def compute_generation_metrics(predictions, references):
-    """Compute BERTScore, ChrF++, and ROUGE-L."""
-    P, R, F1 = bert_score(
-        predictions, references,
-        lang="tl",
-        model_type="bert-base-multilingual-cased",
-        verbose=False,
-    )
-    bertscore_f1 = F1.mean().item()
-
+    """Compute ChrF++, ROUGE-L, and multilingual SBERT cosine similarity."""
     chrf = CHRF(word_order=2)
     chrf_score = chrf.corpus_score(predictions, [references]).score
 
@@ -166,7 +175,14 @@ def compute_generation_metrics(predictions, references):
     ]
     rouge_l = sum(rouge_scores) / len(rouge_scores)
 
-    return {"bertscore_f1": bertscore_f1, "chrf_pp": chrf_score, "rouge_l": rouge_l}
+    # Multilingual SBERT cosine similarity — semantic similarity in embedding space.
+    # Uses the global SBERT_MODEL loaded at startup to avoid reloading per evaluation.
+    pred_embs = SBERT_MODEL.encode(predictions, convert_to_tensor=True, show_progress_bar=False)
+    ref_embs = SBERT_MODEL.encode(references, convert_to_tensor=True, show_progress_bar=False)
+    sbert_sims = cos_sim(pred_embs, ref_embs).diagonal()
+    sbert_score = float(sbert_sims.mean().item())
+
+    return {"chrf_pp": chrf_score, "rouge_l": rouge_l, "sbert_cos": sbert_score}
 
 
 # ---------------------------------------------------------------------------
@@ -175,9 +191,11 @@ def compute_generation_metrics(predictions, references):
 
 def load_model(model_path):
     tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
+    # bfloat16: matches Qwen2.5 training dtype, avoids float16 overflow on large models,
+    # same memory footprint. Safe for all three sizes (0.5B / 1.5B / 7B).
     model = AutoModelForCausalLM.from_pretrained(
         model_path,
-        torch_dtype=torch.float16,
+        torch_dtype=torch.bfloat16,
         device_map="auto",
         trust_remote_code=True,
     )
@@ -212,9 +230,9 @@ def evaluate_model(model_key, model_path, ppl_texts, headline_paragraphs, headli
         predictions.append(pred)
 
     gen_metrics = compute_generation_metrics(predictions, list(headline_titles))
-    print(f"  BERTScore F1: {gen_metrics['bertscore_f1']:.4f}")
     print(f"  ChrF++:       {gen_metrics['chrf_pp']:.2f}")
     print(f"  ROUGE-L:      {gen_metrics['rouge_l']:.4f}")
+    print(f"  SBERT cos:    {gen_metrics['sbert_cos']:.4f}")
 
     del model
     if torch.cuda.is_available():
@@ -255,19 +273,19 @@ if __name__ == "__main__":
             print(f"Error evaluating {model_key}: {e}")
             results[model_key] = None
 
-    print("\n" + "=" * 75)
+    print("\n" + "=" * 82)
     print("SUMMARY: BalitaNLP Generation Task Results")
-    print("=" * 75)
-    print(f"{'Model':<35} {'PPL':>8} {'BERTScore':>10} {'ChrF++':>8} {'ROUGE-L':>8}")
-    print("-" * 75)
+    print("=" * 82)
+    print(f"{'Model':<35} {'PPL':>8} {'ChrF++':>8} {'ROUGE-L':>8} {'SBERT cos':>10}")
+    print("-" * 82)
     for key, res in results.items():
         if res:
             print(
                 f"  {key:<33} "
                 f"{res['perplexity']:>8.2f} "
-                f"{res['bertscore_f1']:>10.4f} "
                 f"{res['chrf_pp']:>8.2f} "
-                f"{res['rouge_l']:>8.4f}"
+                f"{res['rouge_l']:>8.4f} "
+                f"{res['sbert_cos']:>10.4f}"
             )
         else:
             print(f"  {key:<33} {'FAILED':>8}")
