@@ -24,10 +24,16 @@ echo ""
 # Disable WandB logging
 export WANDB_MODE=disabled
 
-# Set temp directories
-export TMPDIR=/projects/$USER/tmp
-export TEMP=/projects/$USER/tmp
-export TMP=/projects/$USER/tmp
+# Redirect cache and temp dirs to scratch (no quota, unlike /projects).
+# HF_HOME covers both the model cache and tokenizer cache for transformers >= 4.x.
+export SCRATCH=/scratch/alpine/$USER
+export TMPDIR=$SCRATCH/tmp
+export TEMP=$SCRATCH/tmp
+export TMP=$SCRATCH/tmp
+export HF_HOME=$SCRATCH/hf_cache
+export TRANSFORMERS_CACHE=$SCRATCH/hf_cache
+export PIP_CACHE_DIR=$SCRATCH/pip_cache
+mkdir -p $TMPDIR $HF_HOME $PIP_CACHE_DIR
 
 # Clean Python environment variables
 unset PYTHONPATH

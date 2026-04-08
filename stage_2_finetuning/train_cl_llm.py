@@ -448,11 +448,13 @@ def main():
         wandb.log({'epoch': epoch, 'avg_loss': avg_loss,
                    'batches_with_loss': num_batches, 'avg_positive_pairs': avg_pos})
 
-        if epoch % 5 == 0:
+        if epoch % 10 == 0:
             checkpoint_path = os.path.join(args.output_dir, f"checkpoint_epoch_{epoch}")
             os.makedirs(checkpoint_path, exist_ok=True)
-            llm.save_pretrained(checkpoint_path)
-            tokenizer.save_pretrained(checkpoint_path)
+            # Intermediate checkpoints save only training_state.pt (optimizer + scheduler
+            # + model weights via model.state_dict). Skipping llm.save_pretrained avoids
+            # writing the full model twice (~2x storage). HF-format weights are saved only
+            # at the final epoch for upload.
             torch.save({
                 'epoch': epoch,
                 'model_state_dict': model.state_dict(),
