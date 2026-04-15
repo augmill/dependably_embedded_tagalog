@@ -195,7 +195,7 @@ def load_model(model_path):
     # same memory footprint. Safe for all three sizes (0.5B / 1.5B / 7B).
     model = AutoModelForCausalLM.from_pretrained(
         model_path,
-        torch_dtype=torch.bfloat16,
+        dtype=torch.bfloat16,
         device_map="auto",
         trust_remote_code=True,
     )
