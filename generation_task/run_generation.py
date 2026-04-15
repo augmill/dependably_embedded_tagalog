@@ -55,7 +55,7 @@ SBERT_MODEL = SentenceTransformer("paraphrase-multilingual-mpnet-base-v2")
 MODELS = {
     "qwen_0.5b_baseline": "Qwen/Qwen2.5-0.5B-Instruct",
     "qwen_0.5b_cl_embed": "paulbontempo/qwen-0.5b-tagalog-cl",
-    "qwen_0.5b_cl_full": "paulbontempo/qwen-0.5b-instruct-tagalog-cl-full",  # TODO: update after upload
+    "qwen_0.5b_cl_full": "paulbontempo/qwen-0.5b-instruct-tagalog-cl-full",
     "qwen_1.5b_baseline": "Qwen/Qwen2.5-1.5B-Instruct",
     "qwen_7b_baseline": "Qwen/Qwen2.5-7B-Instruct",
 }

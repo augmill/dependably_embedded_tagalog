@@ -49,7 +49,7 @@ conda activate cbert
 
 # Ensure transformers supports Qwen2 and sentence-transformers is available
 pip install -q --upgrade transformers
-pip install -q sentence-transformers
+pip install -q sentence-transformers sacrebleu rouge-score
 
 echo "Environment activated:"
 echo "  Python: $(which python)"
