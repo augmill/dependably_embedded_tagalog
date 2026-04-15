@@ -1,0 +1,122 @@
+========================================
+Starting BalitaNLP Generation Task Evaluation
+Perplexity + Headline Generation (Qwen baselines & CL fine-tuned)
+========================================
+Job ID: 24684316
+Node: bgpu-g4-u32
+Start time: Wed Apr 15 13:23:01 MDT 2026
+
+/var/spool/slurmd/job24684316/slurm_script: line 42: /curc/sw/anaconda3/latest/etc/profile.d/conda.sh: Not a directory
+Environment activated:
+  Python: /projects/pabo8622/software/anaconda/envs/cbert/bin/python
+  Conda env: cbert
+
+GPU Information:
+Wed Apr 15 13:23:19 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 570.86.15              Driver Version: 570.86.15      CUDA Version: 12.8     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA H100 PCIe               On  |   00000000:21:00.0 Off |                   On |
+| N/A   29C    P0             46W /  350W |      87MiB /  81559MiB |     N/A      Default |
+|                                         |                        |              Enabled |
++-----------------------------------------+------------------------+----------------------+
+|   1  NVIDIA H100 PCIe               On  |   00000000:E2:00.0 Off |                   On |
+| N/A   28C    P0             44W /  350W |     101MiB /  81559MiB |     N/A      Default |
+|                                         |                        |              Enabled |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| MIG devices:                                                                            |
++------------------+----------------------------------+-----------+-----------------------+
+| GPU  GI  CI  MIG |                     Memory-Usage |        Vol|        Shared         |
+|      ID  ID  Dev |                       BAR1-Usage | SM     Unc| CE ENC  DEC  OFA  JPG |
+|                  |                                  |        ECC|                       |
+|==================+==================================+===========+=======================|
+|  0    1   0   0  |              44MiB / 40448MiB    | 46      0 |  3   0    3    0    3 |
+|                  |                 0MiB / 65535MiB  |           |                       |
++------------------+----------------------------------+-----------+-----------------------+
+                                                                                         
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+
+PyTorch: 2.5.1+cu121
+CUDA available: True
+
+Evaluation Configuration:
+  Dataset: LanceBunag/BalitaNLP (no-image config, test split)
+  Perplexity samples: 500
+  Headline generation samples: 200
+  Models: Qwen 0.5B/1.5B/7B Instruct baselines + CL embed-only + CL full-backprop
+  Metrics: Perplexity, ChrF++, ROUGE-L, multilingual SBERT cosine similarity
+  Dtype: bfloat16 (all models)
+  GPU: h100_3g.40gb (40GB) — required for Qwen-7B in bfloat16 (~14GB weights + KV cache)
+
+Starting evaluation...
+========================================
+Loading multilingual SBERT model...
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 8238.98it/s]
+[1mXLMRobertaModel LOAD REPORT[0m from: sentence-transformers/paraphrase-multilingual-mpnet-base-v2
+Key                     | Status     |  | 
+------------------------+------------+--+-
+embeddings.position_ids | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+Loading BalitaNLP dataset (LanceBunag/BalitaNLP, no-image config)...
+Downloading readme: 0.00B [00:00, ?B/s]Downloading readme: 4.89kB [00:00, 14.0MB/s]
+Resolving data files:   0%|          | 0/79 [00:00<?, ?it/s]Resolving data files: 100%|██████████| 79/79 [00:00<00:00, 442981.30it/s]
+Downloading data:   0%|          | 0.00/160M [00:00<?, ?B/s]Downloading data:   7%|▋         | 10.5M/160M [00:00<00:13, 11.0MB/s]Downloading data:  13%|█▎        | 21.0M/160M [00:01<00:06, 22.4MB/s]Downloading data:  20%|█▉        | 31.5M/160M [00:01<00:04, 28.7MB/s]Downloading data:  26%|██▌       | 41.9M/160M [00:01<00:03, 38.2MB/s]Downloading data:  33%|███▎      | 52.4M/160M [00:01<00:02, 46.7MB/s]Downloading data:  39%|███▉      | 62.9M/160M [00:01<00:01, 54.0MB/s]Downloading data:  46%|████▌     | 73.4M/160M [00:02<00:02, 37.5MB/s]Downloading data:  52%|█████▏    | 83.9M/160M [00:02<00:01, 44.9MB/s]Downloading data:  59%|█████▉    | 94.4M/160M [00:02<00:01, 51.9MB/s]Downloading data:  65%|██████▌   | 105M/160M [00:02<00:00, 55.7MB/s] Downloading data:  72%|███████▏  | 115M/160M [00:02<00:00, 61.2MB/s]Downloading data:  79%|███████▊  | 126M/160M [00:02<00:00, 63.8MB/s]Downloading data:  85%|████████▌ | 136M/160M [00:03<00:00, 50.1MB/s]Downloading data:  92%|█████████▏| 147M/160M [00:03<00:00, 56.2MB/s]Downloading data:  98%|█████████▊| 157M/160M [00:03<00:00, 61.4MB/s]Downloading data: 100%|██████████| 160M/160M [00:03<00:00, 45.4MB/s]
+Downloading data:   0%|          | 0.00/182M [00:00<?, ?B/s]Downloading data:   6%|▌         | 10.5M/182M [00:00<00:13, 13.1MB/s]Downloading data:  12%|█▏        | 21.0M/182M [00:00<00:06, 26.1MB/s]Downloading data:  17%|█▋        | 31.5M/182M [00:01<00:05, 26.4MB/s]Downloading data:  23%|██▎       | 41.9M/182M [00:01<00:03, 36.2MB/s]Downloading data:  29%|██▉       | 52.4M/182M [00:01<00:02, 45.5MB/s]Downloading data:  35%|███▍      | 62.9M/182M [00:02<00:04, 24.9MB/s]Downloading data:  40%|████      | 73.4M/182M [00:02<00:04, 25.9MB/s]Downloading data:  46%|████▌     | 83.9M/182M [00:02<00:02, 33.3MB/s]Downloading data:  52%|█████▏    | 94.4M/182M [00:02<00:02, 41.1MB/s]Downloading data:  58%|█████▊    | 105M/182M [00:03<00:01, 48.3MB/s] Downloading data:  63%|██████▎   | 115M/182M [00:03<00:01, 55.6MB/s]Downloading data:  69%|██████▉   | 126M/182M [00:03<00:00, 58.8MB/s]Downloading data:  75%|███████▍  | 136M/182M [00:04<00:01, 28.8MB/s]Downloading data:  81%|████████  | 147M/182M [00:04<00:01, 33.3MB/s]Downloading data:  86%|████████▋ | 157M/182M [00:04<00:00, 40.7MB/s]Downloading data:  92%|█████████▏| 168M/182M [00:04<00:00, 37.3MB/s]Downloading data:  98%|█████████▊| 178M/182M [00:04<00:00, 44.0MB/s]Downloading data: 100%|██████████| 182M/182M [00:05<00:00, 36.2MB/s]
+Downloading data:   0%|          | 0.00/42.8M [00:00<?, ?B/s]Downloading data:  24%|██▍       | 10.5M/42.8M [00:00<00:02, 15.4MB/s]Downloading data:  49%|████▉     | 21.0M/42.8M [00:00<00:00, 29.2MB/s]Downloading data:  73%|███████▎  | 31.5M/42.8M [00:00<00:00, 40.7MB/s]Downloading data:  98%|█████████▊| 41.9M/42.8M [00:01<00:00, 50.0MB/s]Downloading data: 100%|██████████| 42.8M/42.8M [00:01<00:00, 39.0MB/s]
+Downloading data:   0%|          | 0.00/42.8M [00:00<?, ?B/s]Downloading data:  24%|██▍       | 10.5M/42.8M [00:00<00:02, 12.4MB/s]Downloading data:  49%|████▉     | 21.0M/42.8M [00:01<00:00, 22.5MB/s]Downloading data:  73%|███████▎  | 31.5M/42.8M [00:01<00:00, 23.9MB/s]Downloading data:  98%|█████████▊| 41.9M/42.8M [00:01<00:00, 32.9MB/s]Downloading data: 100%|██████████| 42.8M/42.8M [00:01<00:00, 26.9MB/s]
+Generating train split:   0%|          | 0/281403 [00:00<?, ? examples/s]Generating train split:   4%|▎         | 10000/281403 [00:00<00:05, 50668.27 examples/s]Generating train split:  14%|█▍        | 40000/281403 [00:00<00:01, 135532.09 examples/s]Generating train split:  25%|██▍       | 70000/281403 [00:00<00:01, 172508.86 examples/s]Generating train split:  39%|███▉      | 110000/281403 [00:00<00:00, 201509.72 examples/s]Generating train split:  54%|█████▎    | 150702/281403 [00:01<00:01, 118301.34 examples/s]Generating train split:  61%|██████    | 170702/281403 [00:01<00:00, 129851.68 examples/s]Generating train split:  71%|███████▏  | 200702/281403 [00:01<00:00, 135140.91 examples/s]Generating train split:  78%|███████▊  | 220702/281403 [00:01<00:00, 143098.50 examples/s]Generating train split:  86%|████████▌ | 240702/281403 [00:01<00:00, 148566.88 examples/s]Generating train split:  93%|█████████▎| 260702/281403 [00:01<00:00, 158224.46 examples/s]Generating train split: 100%|██████████| 281403/281403 [00:01<00:00, 168405.34 examples/s]Generating train split: 100%|██████████| 281403/281403 [00:01<00:00, 146800.23 examples/s]
+Generating validation split:   0%|          | 0/35175 [00:00<?, ? examples/s]Generating validation split:  85%|████████▌ | 30000/35175 [00:00<00:00, 218735.87 examples/s]Generating validation split: 100%|██████████| 35175/35175 [00:00<00:00, 226644.08 examples/s]
+Generating test split:   0%|          | 0/35177 [00:00<?, ? examples/s]Generating test split:  28%|██▊       | 10000/35177 [00:00<00:00, 90899.52 examples/s]Generating test split: 100%|██████████| 35177/35177 [00:00<00:00, 166040.51 examples/s]Generating test split: 100%|██████████| 35177/35177 [00:00<00:00, 154569.94 examples/s]
+`torch_dtype` is deprecated! Use `dtype` instead!
+Test split size: 35177
+============================================================
+Evaluating: qwen_0.5b_baseline
+============================================================
+Error evaluating qwen_0.5b_baseline: Using a `device_map`, `tp_plan`, `torch.device` context manager or setting `torch.set_default_device(device)` requires `accelerate`. You can install it with `pip install accelerate`
+============================================================
+Evaluating: qwen_0.5b_cl_embed
+============================================================
+Error evaluating qwen_0.5b_cl_embed: Using a `device_map`, `tp_plan`, `torch.device` context manager or setting `torch.set_default_device(device)` requires `accelerate`. You can install it with `pip install accelerate`
+============================================================
+Evaluating: qwen_0.5b_cl_full
+============================================================
+Error evaluating qwen_0.5b_cl_full: Using a `device_map`, `tp_plan`, `torch.device` context manager or setting `torch.set_default_device(device)` requires `accelerate`. You can install it with `pip install accelerate`
+============================================================
+Evaluating: qwen_1.5b_baseline
+============================================================
+Error evaluating qwen_1.5b_baseline: Using a `device_map`, `tp_plan`, `torch.device` context manager or setting `torch.set_default_device(device)` requires `accelerate`. You can install it with `pip install accelerate`
+============================================================
+Evaluating: qwen_7b_baseline
+============================================================
+Error evaluating qwen_7b_baseline: Using a `device_map`, `tp_plan`, `torch.device` context manager or setting `torch.set_default_device(device)` requires `accelerate`. You can install it with `pip install accelerate`
+
+==================================================================================
+SUMMARY: BalitaNLP Generation Task Results
+==================================================================================
+Model                                    PPL   ChrF++  ROUGE-L  SBERT cos
+----------------------------------------------------------------------------------
+  qwen_0.5b_baseline                  FAILED
+  qwen_0.5b_cl_embed                  FAILED
+  qwen_0.5b_cl_full                   FAILED
+  qwen_1.5b_baseline                  FAILED
+  qwen_7b_baseline                    FAILED
+
+========================================
+Job completed with exit code: 0
+End time: Wed Apr 15 13:24:44 MDT 2026
+========================================
+Evaluation completed successfully!
